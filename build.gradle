@@ -1,0 +1,32 @@
+// https://qiita.com/opengl-8080/items/fcf60ba5daf658f39951
+
+// buildscript {
+//     repositories {
+//         maven {
+//             url "http://192.168.33.10:8081/repository/test/"
+//         }
+//     }
+//     dependencies {
+//         // classpath group: "sample.gradle", name: "i18nSupportPlugin", version: '1.0.0-SNAPSHOT'
+//         classpath files("../i18nSupportPlugin/build/libs/i18nSupportPlugin-1.0.0-SNAPSHOT.jar")
+//     }
+// }
+
+allprojects {
+    apply plugin: 'maven'
+    apply plugin: 'java'
+    apply plugin: 'sample.gradle.plugin.L10nSupportPlugin'
+
+    l10n {
+        baseDir = "src/main/resources"
+        sourceFile = ['**/*_ja.properties', '**/*_ja.json']
+        sourceLang = "ja"
+        targetLang = ["en"]
+
+        workDir = "${project.rootProject.buildDir}/l10nRequest"
+        previousRequest = "${project.rootProject.rootDir}/root-1.0.0-SNAPSHOT.zip"
+    }
+}
+
+version = '1.0.0-SNAPSHOT'
+group = "com.sample"
