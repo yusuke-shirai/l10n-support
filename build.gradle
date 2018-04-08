@@ -1,3 +1,8 @@
+import groovy.json.JsonSlurper
+import sample.gradle.plugin.ResourceDefinition
+import sample.gradle.plugin.ResourceLoader
+import sample.gradle.plugin.ResourceLoaderBase
+
 // https://qiita.com/opengl-8080/items/fcf60ba5daf658f39951
 
 // buildscript {
@@ -19,14 +24,58 @@ allprojects {
 
     l10n {
         baseDir = "src/main/resources"
-        sourceFile = ['**/*_ja.properties', '**/*_ja.json']
+        sourceFile = [
+                ["pattern": '**/locales/ja/*.json', "loaderClass": I18nextLoader ] as ResourceDefinition,
+                ['**/l10n.json': L10nLoader ],
+                '**/*_ja.properties',
+                '**/*_ja.json'
+        ]
         sourceLang = "ja"
         targetLang = ["en"]
 
         workDir = "${project.rootProject.buildDir}/l10nRequest"
-        previousRequest = "${project.rootProject.rootDir}/root-1.0.0-SNAPSHOT.zip"
     }
 }
 
 version = '1.0.0-SNAPSHOT'
 group = "com.sample"
+
+
+
+class I18nextLoader extends ResourceLoaderBase implements ResourceLoader {
+
+    @Override
+    Properties load(File file, String lang) {
+        assert file.name.endsWith(".json")
+
+        File parent = new File(file.parentFile.parentFile, lang)
+        File f = new File(parent, file.name)
+
+        def p = new Properties()
+        if (f.exists()) {
+            Map json = new JsonSlurper().parseText(f.getText("utf-8")).get("member")
+            json.each { k, v ->
+                p.setProperty(k, v)
+            }
+        }
+        return p
+    }
+
+}
+class L10nLoader extends ResourceLoaderBase implements ResourceLoader {
+
+    @Override
+    Properties load(File file, String lang) {
+        assert file.name.endsWith(".json")
+
+        def p = new Properties()
+        Map json = new JsonSlurper().parseText(file.getText("utf-8")).get(lang)
+        if (json != null) {
+            json.each { k, v ->
+                p.setProperty(k, v)
+            }
+        }
+        return p
+    }
+
+}
