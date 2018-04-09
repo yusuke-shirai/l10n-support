@@ -6,19 +6,18 @@ import org.gradle.api.provider.Property
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.file.FileTreeElement
 
-import java.util.regex.Pattern
-
 class L10nTask extends DefaultTask {
     final Property<CharSequence> sourceLang = project.objects.property(CharSequence)
-    final ListProperty<CharSequence> targetLang = project.objects.listProperty(CharSequence)
+    final ListProperty<CharSequence> targetLangs = project.objects.listProperty(CharSequence)
     final Property<CharSequence> baseDir = project.objects.property(CharSequence)
-    final ListProperty<Object> sourceFile = project.objects.listProperty(Object)
+    final ListProperty<Object> sourceFiles = project.objects.listProperty(Object)
     final Property<CharSequence> workDir = project.objects.property(CharSequence)
+    final Property<CharSequence> prohibitedWordFile = project.objects.property(CharSequence)
 
     final def sourceDef = new ArrayList<ResourceDefinition>()
-    final def prohibited = new ArrayList<String>()
+    final def counter = new ResourceCounter()
+    ProhibitedChecker checker = ProhibitedChecker.EMPTY
     L10nFile record = null
-
 
     @TaskAction
     void requestL10n() {
@@ -33,25 +32,32 @@ class L10nTask extends DefaultTask {
                 }
             }
         }
+
+        logger.lifecycle("L10n Result:")
+        counter.get().each { k,v ->
+            logger.lifecycle("- {}: {}", k, v)
+        }
     }
 
     void initialize() {
         new File("${workDir.get()}").mkdirs()
 
-        sourceFile.get().each {
+        sourceFiles.get().each {
             sourceDef.add(ResourceDefinition.from(it))
         }
-        final def pFile = new File("prohibited.txt")
-        if (pFile.exists()) {
-            prohibited.add(pFile.readLines("utf-8"))
+
+        String path = prohibitedWordFile.getOrNull()
+        if (path != null) {
+            this.checker = new ProhibitedChecker(new File(path).readLines("utf-8"))
         }
+
         this.record = new L10nFile(new File(workDir.get()))
     }
 
     void recordFile(FileTreeElement e, Class c) {
         def f = e.file
         def src = loadProperties(f, sourceLang.get(), c)
-        targetLang.get().each { lang ->
+        targetLangs.get().each { lang ->
             def tgt = loadProperties(f, lang, c)
             recordFileLocale("${project.name}/${e.relativePath}", lang, src, tgt)
         }
@@ -61,21 +67,24 @@ class L10nTask extends DefaultTask {
         src.keys().each { key ->
             def r = new L10nFile.Record()
 
+            r.path = path
+
             r.source = src.getProperty(key)
-            def sProhibited = checkProhibited(r.source)
+            def sProhibited = checker.check(r.source)
 
             r.translation = tgt.getProperty(key)
-            def tProhibited = checkProhibited(r.translation)
+            def tProhibited = checker.check(r.translation)
 
-            r.status = L10nStatus.from(sProhibited, tProhibited, r.translation)
+            r.status = L10nStatus.from(sProhibited.size() > 0, tProhibited.size() > 0, r.translation)
+            counter.up(r.status)
 
             r.note = ""
             switch (r.status) {
                 case L10nStatus.SRC_PROHIBITED:
-                    r.note = sProhibited
+                    r.note = sProhibited.join("/")
                     break
                 case L10nStatus.TGT_PROHIBITED:
-                    r.note = tProhibited
+                    r.note = tProhibited.join("/")
                     break
                 default:
                     break
@@ -87,25 +96,12 @@ class L10nTask extends DefaultTask {
         }
     }
 
-    String checkProhibited(String s) {
-        if (s != null) {
-            for (p in prohibited) {
-                def matched = s.find(p)
-                if (matched != null) {
-                    return p
-                }
-            }
-        }
-        return null
-    }
-
     Properties loadProperties(File f, String l, Class<? extends ResourceLoader> c) {
         if (!f.exists()) {
             return new Properties()
         }
         ResourceLoader loader = c.getDeclaredConstructor().newInstance()
         loader.sourceLang = sourceLang.get()
-        logger.info("f={}", f)
         return loader.load(f, l)
     }
 }

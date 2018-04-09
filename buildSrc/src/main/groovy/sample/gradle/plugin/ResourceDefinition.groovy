@@ -32,10 +32,10 @@ class ResourceDefinition {
             } else if (object.endsWith(".json")) {
                 return new ResourceDefinition().setPattern(object).setLoaderClass(JsonLoader.class)
             } else {
-                throw new GradleException("extension of file[${object}] not suppoted for sourceFile")
+                throw new GradleException("extension of file[${object}] not suppoted for sourceFiles")
             }
         } else {
-            throw new GradleException("type[${object.class}] not suppoted for sourceFile")
+            throw new GradleException("type[${object.class}] not suppoted for sourceFiles")
         }
     }
 }

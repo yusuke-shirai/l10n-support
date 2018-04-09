@@ -18,14 +18,18 @@ enum L10nStatus {
         this.isSevere = isSevere
     }
 
-    static L10nStatus from(String srcProhibited, String tgtProhibited, String tgt) {
-        if (srcProhibited != null) {
+    static L10nStatus from(boolean srcProhibited, boolean tgtProhibited, String tgt) {
+        if (srcProhibited) {
             return SRC_PROHIBITED
-        } else if (tgtProhibited != null) {
+        } else if (tgtProhibited) {
             return TGT_PROHIBITED
         } else if (tgt == null || !tgt.isEmpty()) {
             return NO_TRANSLATION
         }
         return FINE
+    }
+
+    String toString() {
+        return this.displayName
     }
 }

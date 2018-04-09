@@ -1,0 +1,76 @@
+import groovy.json.JsonSlurper
+import sample.gradle.plugin.ResourceDefinition
+import sample.gradle.plugin.ResourceLoader
+import sample.gradle.plugin.ResourceLoaderBase
+
+// buildscript {
+//     repositories {
+//         maven {
+//             url "http://192.168.33.10:8081/repository/test/"
+//         }
+//     }
+//     dependencies {
+//          classpath group: "sample.gradle", name: "i18nSupportPlugin", version: '1.0.0-SNAPSHOT'
+//     }
+// }
+
+apply plugin: 'sample.gradle.plugin.L10nSupportPlugin'
+
+l10n {
+    baseDir = "src/main/resources"
+    sourceFiles = [
+            ["pattern": '**/locales/ja/*.json', "loaderClass": I18nextLoader ] as ResourceDefinition,
+            ['**/l10n.json': L10nLoader ],
+            '**/*_ja.properties',
+            '**/*_ja.json'
+    ]
+    sourceLang = "ja"
+    targetLangs = ["en"]
+
+    workDir = "${project.rootProject.buildDir}/l10n"
+    prohibitedWordFile = "${project.rootDir}/prohibited2.txt"
+}
+
+
+version = '1.0.0-SNAPSHOT'
+group = "com.sample"
+
+
+
+class I18nextLoader extends ResourceLoaderBase implements ResourceLoader {
+
+    @Override
+    Properties load(File file, String lang) {
+        assert file.name.endsWith(".json")
+
+        File parent = new File(file.parentFile.parentFile, lang)
+        File f = new File(parent, file.name)
+
+        def p = new Properties()
+        if (f.exists()) {
+            Map json = new JsonSlurper().parseText(f.getText("utf-8")).get("member")
+            json.each { k, v ->
+                p.setProperty(k, v)
+            }
+        }
+        return p
+    }
+
+}
+class L10nLoader extends ResourceLoaderBase implements ResourceLoader {
+
+    @Override
+    Properties load(File file, String lang) {
+        assert file.name.endsWith(".json")
+
+        def p = new Properties()
+        Map json = new JsonSlurper().parseText(file.getText("utf-8")).get(lang)
+        if (json != null) {
+            json.each { k, v ->
+                p.setProperty(k, v)
+            }
+        }
+        return p
+    }
+
+}

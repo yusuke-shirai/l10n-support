@@ -7,12 +7,13 @@ class L10nSupportPlugin implements Plugin<Project> {
     void apply(Project project) {
         def extension = project.extensions.create('l10n', L10nSupportPluginExtension, project)
 
-        def requestDirTask = project.tasks.create('l10n', L10nTask).configure {
+        project.tasks.create('l10n', L10nTask).configure {
             sourceLang = extension.sourceLang
-            targetLang = extension.targetLang
+            targetLangs = extension.targetLangs
             baseDir = extension.baseDir
-            sourceFile = extension.sourceFile
+            sourceFiles = extension.sourceFiles
             workDir = extension.workDir
+            prohibitedWordFile = extension.prohibitedWordFile
         }
     }
 }

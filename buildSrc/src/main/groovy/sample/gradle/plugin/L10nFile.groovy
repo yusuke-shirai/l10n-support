@@ -20,7 +20,7 @@ class L10nFile {
     def append(String lang, Record r) {
         final def recordFile = new File(dir, "l10n_${lang}.csv")
         recordFile.withWriterAppend('utf-8') { writer ->
-            writer.write "${r.path},${r.key},${r.status}, \"${r.source}\",\"${r.translation}\",\"${r.note}\""
+            writer.writeLine "${r.path ?: ''},${r.key ?: ''},${r.status ?: ''}, \"${r.source ?: ''}\",\"${r.translation ?: ''}\",\"${r.note ?: ''}\""
         }
     }
 
