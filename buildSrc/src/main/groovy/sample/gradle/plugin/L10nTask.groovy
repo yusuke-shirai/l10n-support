@@ -10,11 +10,10 @@ class L10nTask extends DefaultTask {
     final Property<CharSequence> sourceLang = project.objects.property(CharSequence)
     final ListProperty<CharSequence> targetLangs = project.objects.listProperty(CharSequence)
     final Property<CharSequence> baseDir = project.objects.property(CharSequence)
-    final ListProperty<Object> sourceFiles = project.objects.listProperty(Object)
+    final ListProperty<ResourceDefinition> sourceFiles = project.objects.listProperty(ResourceDefinition)
     final Property<CharSequence> workDir = project.objects.property(CharSequence)
     final Property<CharSequence> prohibitedWordFile = project.objects.property(CharSequence)
 
-    final def sourceDef = new ArrayList<ResourceDefinition>()
     final def counter = new ResourceCounter()
     ProhibitedChecker checker = ProhibitedChecker.EMPTY
     L10nFile record = null
@@ -23,7 +22,7 @@ class L10nTask extends DefaultTask {
     void requestL10n() {
         initialize()
 
-        sourceDef.each { ResourceDefinition d ->
+        sourceFiles.get().each { ResourceDefinition d ->
             project.fileTree(baseDir.get()).matching {
                 include d.pattern
             }.visit { FileTreeElement e ->
@@ -41,10 +40,6 @@ class L10nTask extends DefaultTask {
 
     void initialize() {
         new File("${workDir.get()}").mkdirs()
-
-        sourceFiles.get().each {
-            sourceDef.add(ResourceDefinition.from(it))
-        }
 
         String path = prohibitedWordFile.getOrNull()
         if (path != null) {

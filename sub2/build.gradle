@@ -17,18 +17,17 @@ import sample.gradle.plugin.ResourceLoaderBase
 apply plugin: 'sample.gradle.plugin.L10nSupportPlugin'
 
 l10n {
-    baseDir = "src/main/resources"
-    sourceFiles = [
-            ["pattern": '**/locales/ja/*.json', "loaderClass": I18nextLoader ] as ResourceDefinition,
-            ['**/l10n.json': L10nLoader ],
-            '**/*_ja.properties',
-            '**/*_ja.json'
-    ]
-    sourceLang = "ja"
-    targetLangs = ["en"]
+    baseDir "src/main/resources"
+    sourceLang "ja"
+    targetLang "en"
 
-    workDir = "${project.rootProject.buildDir}/l10n"
-    prohibitedWordFile = "${project.rootDir}/prohibited2.txt"
+    source include: '**/locales/ja/*.json', loader: I18nextLoader
+    source include: '**/l10n.json', loader: L10nLoader
+    source include: '**/*_ja.properties'
+    source '**/*_ja.json'
+
+    workDir "${project.rootProject.buildDir}/l10n"
+    prohibitedWordFile "${project.rootDir}/prohibited2.txt"
 }
 
 
