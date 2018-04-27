@@ -5,6 +5,7 @@ import org.gradle.internal.impldep.com.google.gson.internal.LinkedHashTreeMap
 class ResourceCounter {
 
     final def counters = new TreeMap<L10nStatus, Integer>()
+    final int total = 0
 
     ResourceCounter() {
         L10nStatus.values().each {
@@ -13,6 +14,7 @@ class ResourceCounter {
     }
 
     def up(L10nStatus status) {
+        total++
         counters.put(status, Integer.valueOf(counters.get(status).intValue() + 1))
     }
 
@@ -20,4 +22,7 @@ class ResourceCounter {
         return counters.asImmutable()
     }
 
+    int total() {
+        return total
+    }
 }

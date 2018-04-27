@@ -10,9 +10,9 @@ class L10nTask extends DefaultTask {
     final Property<CharSequence> sourceLang = project.objects.property(CharSequence)
     final ListProperty<CharSequence> targetLangs = project.objects.listProperty(CharSequence)
     final Property<CharSequence> baseDir = project.objects.property(CharSequence)
-    final ListProperty<ResourceDefinition> sourceFiles = project.objects.listProperty(ResourceDefinition)
-    final Property<CharSequence> workDir = project.objects.property(CharSequence)
-    final Property<CharSequence> prohibitedWordFile = project.objects.property(CharSequence)
+    final ListProperty<ResourceDefinition> sources = project.objects.listProperty(ResourceDefinition)
+    final Property<CharSequence> outputDir = project.objects.property(CharSequence)
+    final ListProperty<CharSequence> prohibitedTerms = project.objects.listProperty(CharSequence)
 
     final def counter = new ResourceCounter()
     ProhibitedChecker checker = ProhibitedChecker.EMPTY
@@ -22,38 +22,41 @@ class L10nTask extends DefaultTask {
     void requestL10n() {
         initialize()
 
-        sourceFiles.get().each { ResourceDefinition d ->
+        sources.get().each { ResourceDefinition d ->
             project.fileTree(baseDir.get()).matching {
                 include d.pattern
             }.visit { FileTreeElement e ->
                 if (!e.directory) {
-                    recordFile(e, d.loaderClass)
+                    recordFile(e, d)
                 }
             }
         }
 
-        logger.lifecycle("L10n Result:")
-        counter.get().each { k,v ->
-            logger.lifecycle("- {}: {}", k, v)
+        int total = counter.total()
+        if (total == 0) {
+            logger.lifecycle("No resource found.")
+        } else {
+            logger.lifecycle("L10n Result:")
+            counter.get().each { k,v ->
+                if (v.intValue() > 0) {
+                    logger.warn("- {}: {}", k, v)
+                }
+            }
         }
     }
 
     void initialize() {
-        new File("${workDir.get()}").mkdirs()
+        new File(outputDir.get()).mkdirs()
 
-        String path = prohibitedWordFile.getOrNull()
-        if (path != null) {
-            this.checker = new ProhibitedChecker(new File(path).readLines("utf-8"))
-        }
-
-        this.record = new L10nFile(new File(workDir.get()))
+        this.checker = new ProhibitedChecker(prohibitedTerms.get())
+        this.record = new L10nFile(new File(outputDir.get()))
     }
 
-    void recordFile(FileTreeElement e, Class c) {
+    void recordFile(FileTreeElement e, ResourceDefinition d) {
         def f = e.file
-        def src = loadProperties(f, sourceLang.get(), c)
+        def src = loadProperties(f, sourceLang.get(), d)
         targetLangs.get().each { lang ->
-            def tgt = loadProperties(f, lang, c)
+            def tgt = loadProperties(f, lang, d)
             recordFileLocale("${project.name}/${e.relativePath}", lang, src, tgt)
         }
     }
@@ -63,6 +66,7 @@ class L10nTask extends DefaultTask {
             def r = new L10nFile.Record()
 
             r.path = path
+            r.key = key
 
             r.source = src.getProperty(key)
             def sProhibited = checker.check(r.source)
@@ -91,12 +95,14 @@ class L10nTask extends DefaultTask {
         }
     }
 
-    Properties loadProperties(File f, String l, Class<? extends ResourceLoader> c) {
-        if (!f.exists()) {
-            return new Properties()
-        }
+    Properties loadProperties(File f, String l, ResourceDefinition d) {
+        Class<? extends ResourceLoader> c = d.loaderClass
         ResourceLoader loader = c.getDeclaredConstructor().newInstance()
         loader.sourceLang = sourceLang.get()
+        loader.charset = d.charset
+        if (!loader.getFile(f, l).exists()) {
+            return new Properties()
+        }
         return loader.load(f, l)
     }
 }

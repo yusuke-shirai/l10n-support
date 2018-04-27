@@ -9,9 +9,9 @@ class L10nSupportPluginExtension {
     final Property<CharSequence> sourceLang
     final ListProperty<CharSequence> targetLangs
     final Property<CharSequence> baseDir
-    final ListProperty<ResourceDefinition> sourceFiles
-    final Property<CharSequence> workDir
-    final Property<CharSequence> prohibitedWordFile
+    final ListProperty<ResourceDefinition> sources
+    final Property<CharSequence> outputDir
+    final ListProperty<CharSequence> prohibitedTerms
 
     L10nSupportPluginExtension(Project project) {
         sourceLang = project.objects.property(CharSequence)
@@ -23,12 +23,12 @@ class L10nSupportPluginExtension {
         baseDir = project.objects.property(CharSequence)
         baseDir.set("src/main/resources")
 
-        sourceFiles = project.objects.listProperty(ResourceDefinition)
+        sources = project.objects.listProperty(ResourceDefinition)
 
-        workDir = project.objects.property(CharSequence)
-        workDir.set("${project.rootProject.buildDir}/l10n")
+        outputDir = project.objects.property(CharSequence)
+        outputDir.set("${project.rootProject.buildDir}/l10n")
 
-        prohibitedWordFile = project.objects.property(CharSequence)
+        prohibitedTerms = project.objects.listProperty(CharSequence)
     }
 
     void sourceLang(String lang) {
@@ -36,13 +36,13 @@ class L10nSupportPluginExtension {
     }
 
     void targetLang(String... langs) {
-        targetLangs.set(langs.toList())
+        this.targetLangs.set(langs.toList())
     }
     void baseDir(String baseDir) {
         this.baseDir.set(baseDir)
     }
     void source(String include, Class loader) {
-        sourceFiles.add(new ResourceDefinition().setPattern(include).setLoaderClass(loader))
+        this.sources.add(new ResourceDefinition().setPattern(include).setLoaderClass(loader))
     }
     void source(String include) {
         source(include, classFor(include))
@@ -62,11 +62,14 @@ class L10nSupportPluginExtension {
 
     }
 
-    void workDir(String workDir) {
-        this.workDir.set(workDir)
+    void outputDir(String outputDir) {
+        this.outputDir.set(outputDir)
     }
-    void prohibitedWordFile(String prohibitedWordFile) {
-        this.prohibitedWordFile.set(prohibitedWordFile)
+    void prohibitedTerms(String... prohibitedTerms) {
+        this.prohibitedTerms.set(prohibitedTerms.toList())
+    }
+    void prohibitedTerms(List<String> prohibitedTerms) {
+        this.prohibitedTerms.set(prohibitedTerms)
     }
 
     private static Class<? extends ResourceDefinition> classFor(String include) {

@@ -11,9 +11,9 @@ class L10nSupportPlugin implements Plugin<Project> {
             sourceLang = extension.sourceLang
             targetLangs = extension.targetLangs
             baseDir = extension.baseDir
-            sourceFiles = extension.sourceFiles
-            workDir = extension.workDir
-            prohibitedWordFile = extension.prohibitedWordFile
+            sources = extension.sources
+            outputDir = extension.outputDir
+            prohibitedTerms = extension.prohibitedTerms
         }
     }
 }
