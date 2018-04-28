@@ -4,9 +4,9 @@ enum L10nStatus {
 
     FINE("fine", false),
 
-    SRC_PROHIBITED("profibited word in original", true),
+    SRC_PROHIBITED("prohibited word in original", true),
 
-    TGT_PROHIBITED("profibited word in translation", true),
+    TGT_PROHIBITED("prohibited word in translation", true),
 
     NO_TRANSLATION("no translation", false),
 
@@ -23,7 +23,7 @@ enum L10nStatus {
             return SRC_PROHIBITED
         } else if (tgtProhibited) {
             return TGT_PROHIBITED
-        } else if (tgt == null || !tgt.isEmpty()) {
+        } else if (tgt == null || tgt.isEmpty()) {
             return NO_TRANSLATION
         }
         return FINE

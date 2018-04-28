@@ -24,9 +24,16 @@ class ResourceDefinition {
         if (o instanceof ResourceDefinition) {
             return new ResourceDefinition().setPattern(o.pattern).setLoaderClass(o.loaderClass).setCharset(o.charset)
         } else if (o instanceof Map<String, Class<? extends ResourceLoader>>) {
+            if (o.size() != 1) {
+                throw new GradleException("size of map should be 1 [${o}]")
+            }
+
             String pattern = null
             Class<? extends ResourceLoader> loaderClass = null
             o.each {k, v ->
+                if (!ResourceLoader.class.isAssignableFrom(v)) {
+                    throw new GradleException("Not a child class of ResourceLoader [${v}]")
+                }
                 pattern = k
                 loaderClass = v
             }
@@ -37,10 +44,10 @@ class ResourceDefinition {
             } else if (o.endsWith(".json")) {
                 return new ResourceDefinition().setPattern(o).setLoaderClass(JsonLoader.class)
             } else {
-                throw new GradleException("extension of file[${o}] not suppoted for sourceFiles")
+                throw new GradleException("extension of file[${o}] not supported")
             }
         } else {
-            throw new GradleException("type[${o.class}] not suppoted for sourceFiles")
+            throw new GradleException("type[${o.class}] not supported")
         }
     }
 }
