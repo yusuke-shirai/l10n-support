@@ -77,6 +77,8 @@ class L10nSupportPluginExtension {
             return PropertiesLoader.class
         } else if (include.endsWith(".json")) {
             return JsonLoader.class
+        } else if (include.endsWith(".csv")) {
+            return CsvLoader.class
         } else {
             throw new GradleException("extension of file[${include}] not suppoted for include")
         }

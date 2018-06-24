@@ -25,9 +25,10 @@ l10n {
     source include: '**/l10n.json', loader: L10nLoader
     source include: '**/*_ja.properties'
     source '**/*_ja.json'
+    source '**/*.csv'
 
-    workDir "${project.rootProject.buildDir}/l10n"
-    prohibitedWordFile "${project.rootDir}/prohibited2.txt"
+    outputDir "${project.rootProject.buildDir}/l10n"
+    prohibitedTerms file("${project.rootDir}/prohibited2.txt").readLines()
 }
 
 
@@ -42,8 +43,7 @@ class I18nextLoader extends ResourceLoaderBase implements ResourceLoader {
     Properties load(File file, String lang) {
         assert file.name.endsWith(".json")
 
-        File parent = new File(file.parentFile.parentFile, lang)
-        File f = new File(parent, file.name)
+        File f = getFile(file, lang)
 
         def p = new Properties()
         if (f.exists()) {
@@ -55,6 +55,11 @@ class I18nextLoader extends ResourceLoaderBase implements ResourceLoader {
         return p
     }
 
+    @Override
+    File getFile(File source, String lang) {
+        File parent = new File(source.parentFile.parentFile, lang)
+        return new File(parent, source.name)
+    }
 }
 class L10nLoader extends ResourceLoaderBase implements ResourceLoader {
 
@@ -72,4 +77,8 @@ class L10nLoader extends ResourceLoaderBase implements ResourceLoader {
         return p
     }
 
+    @Override
+    File getFile(File source, String lang) {
+        return source
+    }
 }
